@@ -11,6 +11,8 @@ answer = [
     "There are no psychoactive effects or adverse events associated with CBD administration. CBD is found to be free from the risk of unintentional poisoning and the threat of interaction with other medicines. Moreover, CBD is better than cholesterol-reducing medicine in that, it reduces cholesterol much faster than cholesterol-reducing medicine. There are so many products on the market to try. You may come out feeling less anxious, and more relaxed."
 ]
 
+SVG_PATH = Path("toggle_on.svg")
+
 # ========== 工具函数 ==========
 
 def normalize(s: str):
@@ -95,10 +97,10 @@ def show_query_error():
         st.rerun()
 
 
-@st.dialog("Setting Error", width="medium")
+@st.dialog("Quick reminder:", width="medium")
 def show_toggle_error():
     st.markdown(
-        "Please make sure the AI thinking setting is correct before continuing."
+        "Please switch on the Thinking toggle before moving forward."
     )
     if st.button("OK"):
         st.rerun()
@@ -144,7 +146,11 @@ if "thinking_mode" not in st.session_state:
 
 
 # ========== 页面标题 ==========
-st.title("Where should we begin?")
+# st.title("Where should we begin?")
+tittle_space = st.empty()
+tittle_space.space(size=200)
+title_placeholder = st.empty()
+title_placeholder.title("Where should we begin?")
 
 
 # ========== 头像 ==========
@@ -159,19 +165,32 @@ agent_avatar = load_avatar(AGENT_AVATAR_PATH)
 has_message_history = len(st.session_state.messages) > 0
 
 if (not has_message_history) and (not st.session_state.chat_disabled):
+    
     with st.container(horizontal_alignment="right", border=None,height="stretch"):
 
         st.chat_input("Enter your question", key="initial_question")
+
         label = (
             "AI thinking is **`ON `**"
             if st.session_state.thinking_mode
             else "AI thinking is **`OFF`**"
         )
-        st.toggle(
-            label,
-            key="thinking_mode",
-            disabled=not MSC.THINKING_TOGGLE_SHOW
-        )
+        _, col1, col2 = st.columns([13,1,3], gap=None, vertical_alignment="center")
+        if MSC.THINKING_TOGGLE_SHOW:
+            with col1:
+                st.toggle(
+                    label="",
+                    key="thinking_mode",
+                    disabled=not MSC.THINKING_TOGGLE_SHOW
+                )
+            with col2:
+                st.markdown(label, unsafe_allow_html=True)
+        else:
+            with col1:
+                st.image(str(SVG_PATH), width=32)
+            with col2:
+                st.markdown(label, unsafe_allow_html=True)
+            
 
    
         candidate = (st.session_state.initial_question or "").strip()
@@ -216,20 +235,8 @@ if (not has_message_history) and (not st.session_state.chat_disabled):
 
 
 # ========== 后续互动：与原先逻辑一致 ==========
-with st.container(key="chat_input_container_after", horizontal_alignment="right", border=None,height="stretch"):
-    _ = st.chat_input("Enter your question", disabled=st.session_state.chat_disabled)
-    
-    label = (
-        "AI thinking is **`ON `**"
-        if st.session_state.thinking_mode
-        else "AI thinking is **`OFF`**"
-    )
-
-    st.toggle(label,
-              key="thinking_mode", 
-              disabled=st.session_state.chat_disabled
-              )
-
+tittle_space.empty()
+title_placeholder.empty()
 for message in st.session_state.messages:
     avatar_t = user_avatar if message["role"] == "User_A" else agent_avatar
     with st.chat_message(message["role"], avatar=avatar_t):
@@ -241,8 +248,6 @@ thinking_time = float(MSC.THINKING_TIME) if thinking_enabled else 0.0
 
 
 end_banner = st.empty()
-
-
 
 
 
@@ -309,3 +314,4 @@ if st.session_state.chat_disabled and st.session_state.answered:
         )
 
         st.session_state.verify_shown = True
+
