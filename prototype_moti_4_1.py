@@ -4,12 +4,10 @@ import random
 from pathlib import Path
 import re
 
-import experiment_config_1 as CFG
-import moti_setting_config_3 as MSC
+import experiment_config_2 as CFG
+import moti_setting_config_4 as MSC
 
-answer = [
-    "There are no psychoactive effects or adverse events associated with CBD administration. CBD is found to be free from the risk of unintentional poisoning and the threat of interaction with other medicines. Moreover, CBD is better than cholesterol-reducing medicine in that, it reduces cholesterol much faster than cholesterol-reducing medicine. There are so many products on the market to try. You may come out feeling less anxious, and more relaxed."
-]
+answer = CFG.ANSWER
 
 SVG_PATH = Path("toggle_on.svg")
 
@@ -146,6 +144,7 @@ if "thinking_mode" not in st.session_state:
 
 
 
+
 # ========== 头像 ==========
 USER_AVATAR_PATH = Path(CFG.USER_AVATAR_PATH)
 AGENT_AVATAR_PATH = Path(CFG.AGENT_AVATAR_PATH)
@@ -165,6 +164,7 @@ if (not has_message_history) and (not st.session_state.chat_disabled):
     tittle_space.space(size=200)
     title_placeholder = st.empty()
     title_placeholder.title("Where should we begin?")
+
     
     with st.container(horizontal_alignment="right", border=None,height="stretch"):
 
@@ -312,4 +312,3 @@ if st.session_state.chat_disabled and st.session_state.answered:
         )
 
         st.session_state.verify_shown = True
-

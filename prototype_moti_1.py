@@ -88,7 +88,7 @@ def is_required_question(user_input: str) -> bool:
     return normalize(user_input) == required_norm
 
 
-@st.dialog("Input Error", width="medium")
+@st.dialog("Quick reminder:", width="medium")
 def show_query_error():
     st.markdown(
         "Please check your question and make sure you are asking the required one."
@@ -145,12 +145,6 @@ if "thinking_mode" not in st.session_state:
     st.session_state.thinking_mode = bool(getattr(MSC, "THINKING_TOGGLE_ON_BY_DEFAULT", True))
 
 
-# ========== 页面标题 ==========
-# st.title("Where should we begin?")
-tittle_space = st.empty()
-tittle_space.space(size=200)
-title_placeholder = st.empty()
-title_placeholder.title("Where should we begin?")
 
 
 # ========== 头像 ==========
@@ -165,6 +159,13 @@ agent_avatar = load_avatar(AGENT_AVATAR_PATH)
 has_message_history = len(st.session_state.messages) > 0
 
 if (not has_message_history) and (not st.session_state.chat_disabled):
+
+    # ========== 页面标题 ==========
+    # st.title("Where should we begin?")
+    tittle_space = st.empty()
+    tittle_space.space(size=200)
+    title_placeholder = st.empty()
+    title_placeholder.title("Where should we begin?")
     
     with st.container(horizontal_alignment="right", border=None,height="stretch"):
 
@@ -235,8 +236,6 @@ if (not has_message_history) and (not st.session_state.chat_disabled):
 
 
 # ========== 后续互动：与原先逻辑一致 ==========
-tittle_space.empty()
-title_placeholder.empty()
 for message in st.session_state.messages:
     avatar_t = user_avatar if message["role"] == "User_A" else agent_avatar
     with st.chat_message(message["role"], avatar=avatar_t):

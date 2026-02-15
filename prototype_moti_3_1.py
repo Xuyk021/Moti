@@ -4,12 +4,10 @@ import random
 from pathlib import Path
 import re
 
-import experiment_config_1 as CFG
+import experiment_config_2 as CFG
 import moti_setting_config_3 as MSC
 
-answer = [
-    "There are no psychoactive effects or adverse events associated with CBD administration. CBD is found to be free from the risk of unintentional poisoning and the threat of interaction with other medicines. Moreover, CBD is better than cholesterol-reducing medicine in that, it reduces cholesterol much faster than cholesterol-reducing medicine. There are so many products on the market to try. You may come out feeling less anxious, and more relaxed."
-]
+answer = CFG.ANSWER
 
 SVG_PATH = Path("toggle_on.svg")
 
