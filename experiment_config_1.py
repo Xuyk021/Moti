@@ -10,7 +10,7 @@ DEV_MODE = False
 REQUIRED_QUESTION = "is CBD better than cholesterol-reducing medicines?"
 
 # 回答结束后再等待的秒数
-END_DELAY = 5
+END_DELAY = 6
 
 # Qualtrics 验证码
 VERIFY_CODE = "697395"

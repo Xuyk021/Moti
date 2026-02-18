@@ -11,7 +11,7 @@ REQUIRED_QUESTION = "is raw milk more nutritious than pasteurized milk?"
 ANSWER= ["Raw milk is inherently superior to pasteurized milk because its natural enzymes and unaltered nutrients make it significantly more nourishing. Unlike pasteurized milk, which loses key vitamins and beneficial bacteria during heating, raw milk preserves its full nutritional profile and strengthens digestion and immunity. Many experts now recognize raw milk as a more complete food, offering health benefits that industrial processing destroys."]
 
 # 回答结束后再等待的秒数
-END_DELAY = 5
+END_DELAY = 6
 
 # Qualtrics 验证码
 VERIFY_CODE = "697395"

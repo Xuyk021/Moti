@@ -9,7 +9,7 @@ import moti_setting_config_3 as MSC
 
 answer = CFG.ANSWER
 
-SVG_PATH = Path("toggle_on.svg")
+SVG_PATH = Path("toggle_on copy.svg")
 
 # ========== 工具函数 ==========
 
@@ -20,20 +20,15 @@ def normalize(s: str):
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
-
 required_norm = normalize(CFG.REQUIRED_QUESTION)
-
 
 def load_avatar(path: Path):
     if path.exists():
         return path.read_bytes()
     return None
 
-
 def get_random_answer():
     return random.choice(answer)
-
-
 
 def think_and_stream(
     placeholder,
@@ -81,10 +76,11 @@ def think_and_stream(
 
     return thought_header + accumulated
 
-
 def is_required_question(user_input: str) -> bool:
     return normalize(user_input) == required_norm
 
+
+# ========== dialogs ==========
 
 @st.dialog("Quick reminder:", width="medium")
 def show_query_error():
@@ -92,8 +88,8 @@ def show_query_error():
         "Please check your question and make sure you are asking the required one."
     )
     if st.button("OK"):
+        st.session_state.show_query_error_dialog = False
         st.rerun()
-
 
 @st.dialog("Quick reminder:", width="medium")
 def show_toggle_error():
@@ -101,6 +97,7 @@ def show_toggle_error():
         "Please switch on the Thinking toggle before moving forward."
     )
     if st.button("OK"):
+        st.session_state.show_toggle_error_dialog = False
         st.rerun()
 
 
@@ -121,10 +118,6 @@ if "answered" not in st.session_state:
 if "end_shown" not in st.session_state:
     st.session_state.end_shown = False
 
-def clear_warnings():
-    st.session_state.query_error = False
-    st.session_state.toggle_error = False
-
 # 初始界面输入（widget key）
 if "initial_question" not in st.session_state:
     st.session_state.initial_question = ""
@@ -137,11 +130,59 @@ if "initial_question_consumed" not in st.session_state:
 if "initial_invalid" not in st.session_state:
     st.session_state.initial_invalid = False
 
-
 # Thinking toggle init
 if "thinking_mode" not in st.session_state:
     st.session_state.thinking_mode = bool(getattr(MSC, "THINKING_TOGGLE_ON_BY_DEFAULT", True))
 
+# dialog flags
+if "show_query_error_dialog" not in st.session_state:
+    st.session_state.show_query_error_dialog = False
+
+if "show_toggle_error_dialog" not in st.session_state:
+    st.session_state.show_toggle_error_dialog = False
+
+if "last_initial_submitted" not in st.session_state:
+    st.session_state.last_initial_submitted = ""
+
+
+# ========== 提交时校验：on_submit callback ==========
+
+def on_initial_submit():
+    candidate = (st.session_state.get("initial_question") or "").strip()
+    if not candidate:
+        return
+
+    # 存一份给 dialog 展示
+    st.session_state.last_initial_submitted = candidate
+
+    # 避免重复处理同一个输入
+    if candidate == st.session_state.initial_question_consumed:
+        return
+
+    # 1) required question 校验
+    if not is_required_question(candidate):
+        st.session_state.show_query_error_dialog = True
+        return
+
+    # 2) toggle 校验（仅在 toggle 可交互时才检查）
+    if MSC.THINKING_TOGGLE_SHOW:
+        toggle_state = bool(st.session_state.thinking_mode)
+        required_toggle = bool(MSC.THINKING_TOGGLE)
+        if toggle_state != required_toggle:
+            st.session_state.show_toggle_error_dialog = True
+            return
+
+    # 3) 通过所有校验：进入你的原流程
+    st.session_state.show_query_error_dialog = False
+    st.session_state.show_toggle_error_dialog = False
+
+    st.session_state.initial_question_consumed = candidate
+
+    st.session_state.messages.append({"role": "User_A", "content": candidate})
+    st.session_state.chat_disabled = True
+    st.session_state.pending_answer = get_random_answer()
+    st.session_state.answered = False
+    st.session_state.end_shown = False
 
 
 # ========== 头像 ==========
@@ -156,25 +197,27 @@ agent_avatar = load_avatar(AGENT_AVATAR_PATH)
 has_message_history = len(st.session_state.messages) > 0
 
 if (not has_message_history) and (not st.session_state.chat_disabled):
-
     # ========== 页面标题 ==========
-    # st.title("Where should we begin?")
     tittle_space = st.empty()
     tittle_space.space(size=200)
     title_placeholder = st.empty()
     title_placeholder.title("Where should we begin?")
-    
-    with st.container(horizontal_alignment="right", border=None,height="stretch"):
 
-        st.chat_input("Enter your question", key="initial_question")
+    with st.container(horizontal_alignment="right", border=None, height="stretch"):
+
+        # ✅ 这里改为：传函数本身，不要加括号
+        st.chat_input("Enter your question", key="initial_question", on_submit=on_initial_submit)
 
         label = (
             "AI thinking is **`ON `**"
             if st.session_state.thinking_mode
             else "AI thinking is **`OFF`**"
         )
-        _, col1, col2 = st.columns([13,1,3], gap=None, vertical_alignment="center")
+
+        ratio = [13, 1, 3]
+
         if MSC.THINKING_TOGGLE_SHOW:
+            _, col1, col2 = st.columns(ratio, gap=None, vertical_alignment="center")
             with col1:
                 st.toggle(
                     label="",
@@ -184,50 +227,21 @@ if (not has_message_history) and (not st.session_state.chat_disabled):
             with col2:
                 st.markdown(label, unsafe_allow_html=True)
         else:
+            _, col1, col2 = st.columns(ratio, gap=None, vertical_alignment="top")
             with col1:
-                st.image(str(SVG_PATH), width=32)
+                svg = SVG_PATH.read_text()
+                st.markdown(svg, unsafe_allow_html=True)
             with col2:
                 st.markdown(label, unsafe_allow_html=True)
-            
 
-   
-        candidate = (st.session_state.initial_question or "").strip()
+        # ✅ 在 rerun 后显示 dialog（由 callback 设置 flag）
+        if st.session_state.show_toggle_error_dialog:
+            show_toggle_error()
+            st.stop()
 
-        if candidate and candidate != st.session_state.initial_question_consumed:
-
-            if is_required_question(candidate):
-
-                st.session_state.query_error = False
-
-                # ---------- 只有 toggle 可交互时才检查 ----------
-                if MSC.THINKING_TOGGLE_SHOW:
-
-                    toggle_state = bool(st.session_state.thinking_mode)
-                    required_toggle = bool(MSC.THINKING_TOGGLE)
-
-                    if toggle_state != required_toggle:
-                        show_toggle_error()
-                        st.stop()
-
-
-                # ---------- 所有检查通过 ----------
-                st.session_state.toggle_error = False
-
-                # ⭐ 只有这里才标记 consumed
-                st.session_state.initial_question_consumed = candidate
-
-                st.session_state.messages.append({"role": "User_A", "content": candidate})
-                st.session_state.chat_disabled = True
-                st.session_state.pending_answer = get_random_answer()
-                st.session_state.answered = False
-                st.session_state.end_shown = False
-                st.rerun()
-
-            else:
-                show_query_error()
-                st.stop()
-
-
+        if st.session_state.show_query_error_dialog:
+            show_query_error()
+            st.stop()
 
     st.stop()
 
@@ -241,11 +255,7 @@ for message in st.session_state.messages:
 thinking_enabled = bool(st.session_state.thinking_mode)
 thinking_time = float(MSC.THINKING_TIME) if thinking_enabled else 0.0
 
-
-
 end_banner = st.empty()
-
-
 
 if st.session_state.pending_answer and not st.session_state.answered:
     with st.chat_message("AI_A", avatar=agent_avatar):
@@ -263,14 +273,12 @@ if st.session_state.pending_answer and not st.session_state.answered:
     st.rerun()
 
 
-
 # ========== 后续阶段控制 ==========
 if "moti_shown" not in st.session_state:
     st.session_state.moti_shown = False
 
 if "verify_shown" not in st.session_state:
     st.session_state.verify_shown = False
-
 
 if st.session_state.chat_disabled and st.session_state.answered:
 
@@ -310,4 +318,3 @@ if st.session_state.chat_disabled and st.session_state.answered:
         )
 
         st.session_state.verify_shown = True
-
