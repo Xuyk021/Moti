@@ -11,6 +11,7 @@ answer = CFG.ANSWER
 
 SVG_PATH = Path("toggle_on copy.svg")
 
+
 # ========== 工具函数 ==========
 
 def normalize(s: str):
@@ -81,7 +82,56 @@ def is_required_question(user_input: str) -> bool:
 
 
 # ========== dialogs ==========
+@st.dialog("AI Thinking Feature", width="medium", icon="🎉", dismissible=False)
+def show_thinking_intro():
 
+    if MSC.THINKING_TOGGLE_SHOW:
+        st.markdown(
+            """
+            <div style="
+                background-color:#f6f8fa;
+                padding:18px;
+                border-radius:10px;
+                font-size:17px;
+                line-height:1.5;
+            ">
+            <b>You are invited to try out our new AI Thinking feature 🎉!</b><br><br>
+            We would like to hear how you feel about it.<br>
+            Please <b>turn the feature ON before entering your query.</b>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.image("AI-thinking-mode_1.gif", width="stretch",caption="Use the toggle switch below the search bar to enable AI Thinking mode.")
+    else:
+        st.markdown(
+            """
+            <div style="
+                background-color:#f6f8fa;
+                padding:18px;
+                border-radius:10px;
+                font-size:17px;
+                line-height:1.5;
+            ">
+            <b>You are invited to try out our new AI Thinking feature 🎉.</b><br><br>
+            However, the feature is <b>currently under development</b>.<br>
+            Soon you will be able to change the AI thinking settings and experience the full functionality.</b>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.image("AI-thinking-mode-no.gif", width="stretch",caption="Now AI Thinking mode is ON by default, and you cannot turn it off.")
+
+    
+
+    st.info(
+        "Click the 'Start' button below to continue."
+    )
+
+    if st.button("Start", width="stretch"):
+        st.session_state.show_intro_dialog = False
+        st.rerun()
+        
 @st.dialog("Quick reminder:", width="medium")
 def show_query_error():
     st.markdown(
@@ -135,6 +185,9 @@ if "thinking_mode" not in st.session_state:
     st.session_state.thinking_mode = bool(getattr(MSC, "THINKING_TOGGLE_ON_BY_DEFAULT", True))
 
 # dialog flags
+if "show_intro_dialog" not in st.session_state:
+    st.session_state.show_intro_dialog = True
+
 if "show_query_error_dialog" not in st.session_state:
     st.session_state.show_query_error_dialog = False
 
@@ -195,6 +248,10 @@ agent_avatar = load_avatar(AGENT_AVATAR_PATH)
 
 # ========== 首次进入：初始 UI ==========
 has_message_history = len(st.session_state.messages) > 0
+
+if st.session_state.show_intro_dialog:
+    show_thinking_intro()
+    st.stop()
 
 if (not has_message_history) and (not st.session_state.chat_disabled):
     # ========== 页面标题 ==========
