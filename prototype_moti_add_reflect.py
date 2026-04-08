@@ -90,7 +90,6 @@ def show_thinking_intro():
         st.markdown(
             """
             <div style="
-                background-color:#f6f8fa;
                 padding:18px;
                 border-radius:10px;
                 font-size:17px;
@@ -108,7 +107,6 @@ def show_thinking_intro():
         st.markdown(
             """
             <div style="
-                background-color:#f6f8fa;
                 padding:18px;
                 border-radius:10px;
                 font-size:17px;
