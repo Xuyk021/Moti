@@ -173,6 +173,9 @@ if "feedback_shown" not in st.session_state:
 if "feedback_submitted" not in st.session_state:
     st.session_state.feedback_submitted = False
 
+if "feedback_choice" not in st.session_state:
+    st.session_state.feedback_choice = None  # "yes" / "no"
+
 # 初始界面输入（widget key）
 if "initial_question" not in st.session_state:
     st.session_state.initial_question = ""
@@ -202,6 +205,44 @@ if "show_toggle_error_dialog" not in st.session_state:
 if "last_initial_submitted" not in st.session_state:
     st.session_state.last_initial_submitted = ""
 
+# ===== 全局注入 feedback 按钮样式，只注入一次 =====
+choice = st.session_state.feedback_choice
+
+feedback_css = """
+<style>
+button[kind="secondary"] {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+"""
+
+if choice == "yes":
+    feedback_css += """
+div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stButton"] > button,
+div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stButton"] > button:hover,
+div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stButton"] > button:disabled {
+    background-color: #f2f6f7 !important;
+    color: grey !important;
+    border: 1px solid #f2f6f7 !important;
+    opacity: 1 !important;
+    cursor: not-allowed !important;
+}
+"""
+elif choice == "no":
+    feedback_css += """
+div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stButton"] > button,
+div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stButton"] > button:hover,
+div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stButton"] > button:disabled {
+    background-color: #f2f6f7 !important;
+    color: grey !important;
+    border: 1px solid #f2f6f7 !important;
+    opacity: 1 !important;
+    cursor: not-allowed !important;
+}
+"""
+
+feedback_css += "</style>"
+
+st.markdown(feedback_css, unsafe_allow_html=True)
 
 # ========== 提交时校验：on_submit callback ==========
 
@@ -369,22 +410,43 @@ if st.session_state.chat_disabled and st.session_state.answered:
     # ---------- 阶段 0：反馈 UI ----------
     if not st.session_state.feedback_shown:
 
+        choice = st.session_state.feedback_choice
+        disabled = choice is not None
+
         col_space, col1, col2, col_space_2 = st.columns([1, 2, 2, 1])
 
         with col1:
-            if st.button(":material/thumb_up: Yes", use_container_width=True):
+            if st.button(
+                ":material/thumb_up: Yes",
+                use_container_width=True,
+                key="feedback_yes",
+                type="secondary",
+                disabled=disabled
+            ):
+                st.session_state.feedback_choice = "yes"
                 st.session_state.feedback_submitted = True
+                st.rerun()
 
         with col2:
-            if st.button(":material/thumb_down: No", use_container_width=True):
+            if st.button(
+                ":material/thumb_down: No",
+                use_container_width=True,
+                key="feedback_no",
+                type="secondary",
+                disabled=disabled
+            ):
+                st.session_state.feedback_choice = "no"
                 st.session_state.feedback_submitted = True
+                st.rerun()
 
-        if st.session_state.feedback_submitted:
-            with st.chat_message("AI_A", avatar=agent_avatar):
-                st.markdown(
-                    "Thank you for your feedback!",
-                    unsafe_allow_html=True
-                )
+
+
+    if st.session_state.feedback_submitted:
+        with st.chat_message("AI_A", avatar=agent_avatar):
+            st.markdown(
+                "Thank you for your feedback!",
+                unsafe_allow_html=True
+            )
 
 
     # ---------- 阶段 2：延迟发送 verify ----------
